@@ -4519,7 +4519,6 @@ async function init() {
         }
     }
 
-        loadedAssetsCount++;
         updatePreloaderProgress(100, 'Готово!');
 
         await new Promise(resolve => setTimeout(resolve, 300));
