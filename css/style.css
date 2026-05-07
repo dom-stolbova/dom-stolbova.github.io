@@ -9,6 +9,9 @@ html, body {
     height: 100%;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+	-moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 canvas {
@@ -27,7 +30,6 @@ canvas.hovering-hotspot:active {
     cursor: grabbing !important;
 }
 
-/* Стили для кнопки навигации */
 .nav-toggle-button {
     position: fixed;
     bottom: 20px;
@@ -52,7 +54,6 @@ canvas.hovering-hotspot:active {
     transform: scale(0.98);
 }
 
-/* Для мобильных устройств */
 @media (max-width: 768px) {
     .nav-toggle-button {
         bottom: 15px;
@@ -62,7 +63,6 @@ canvas.hovering-hotspot:active {
     }
 }
 
-/* КУКИ */
 #cookie_notification{
     display: none;
     justify-content: space-between;
