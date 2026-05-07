@@ -4201,54 +4201,30 @@ async function init() {
         window.lastScene5Action = null;
         window.lastScene9State = null;
 
-        const allAssets = [];
-        const videoPaths = new Set();
+        const uniquePaths = new Set();
 
-for (const sceneKey in scenes) {
-    const scene = scenes[sceneKey];
-    if (scene.cubeMap) {
-        scene.cubeMap.forEach(item => {
-            if (item.type === 'video') {
-                allAssets.push({ type: 'video', path: item.path });
-                videoPaths.add(item.path);
-                if (item.maskPath) {
-                    allAssets.push({ type: 'video', path: item.maskPath });
-                    videoPaths.add(item.maskPath);
-                }
-            } else if (item.type === 'image') {
-                allAssets.push({ type: 'image', path: item.path });
-                if (item.maskPath) {
-                    allAssets.push({ type: 'image', path: item.maskPath });
-                }
+        for (const sceneKey in scenes) {
+            const scene = scenes[sceneKey];
+            if (scene.cubeMap) {
+                scene.cubeMap.forEach(item => {
+                    uniquePaths.add(item.path);
+                    if (item.maskPath) uniquePaths.add(item.maskPath);
+                });
             }
-        });
-    }
-    if (scene.hotspots) {
-        scene.hotspots.forEach(hotspot => {
-            if (hotspot.targetType === 'imagepopup' && hotspot.imageUrl) {
-                allAssets.push({ type: 'image', path: hotspot.imageUrl });
-            }
-            
-            if (hotspot.targetCubeMap) {
-                hotspot.targetCubeMap.forEach(item => {
-                    if (item.type === 'video') {
-                        allAssets.push({ type: 'video', path: item.path });
-                        videoPaths.add(item.path);
-                        if (item.maskPath) {
-                            allAssets.push({ type: 'video', path: item.maskPath });
-                            videoPaths.add(item.maskPath);
-                        }
-                    } else if (item.type === 'image') {
-                        allAssets.push({ type: 'image', path: item.path });
-                        if (item.maskPath) {
-                            allAssets.push({ type: 'image', path: item.maskPath });
-                        }
+            if (scene.hotspots) {
+                scene.hotspots.forEach(hotspot => {
+                    if (hotspot.targetType === 'imagepopup' && hotspot.imageUrl) {
+                        uniquePaths.add(hotspot.imageUrl);
+                    }
+                    if (hotspot.targetCubeMap) {
+                        hotspot.targetCubeMap.forEach(item => {
+                            uniquePaths.add(item.path);
+                            if (item.maskPath) uniquePaths.add(item.maskPath);
+                        });
                     }
                 });
             }
-        });
-    }
-}
+        }
 
         const scene4Videos = [
             '../video/front4_1.webm',
@@ -4256,25 +4232,24 @@ for (const sceneKey in scenes) {
             '../video/front4_2.webm',
             '../video/front4_2_mask.webm'
         ];
-        scene4Videos.forEach(path => {
-            if (!videoPaths.has(path)) {
-                allAssets.push({ type: 'video', path: path });
-                videoPaths.add(path);
-            }
-        });
+        scene4Videos.forEach(path => uniquePaths.add(path));
 
         const firstScene = scenes.scene1;
         firstScene.cubeMap.forEach(item => {
-            const path = navigationVisible ? item.path : (item.maskPath || item.path);
-            if (!allAssets.some(a => a.path === path)) {
-                allAssets.push({ type: item.type, path: path });
-            }
+            uniquePaths.add(navigationVisible ? item.path : (item.maskPath || item.path));
         });
 
-        totalAssetsToLoad = allAssets.length + 1;
+        const allAssets = Array.from(uniquePaths).map(path => {
+            const isVideo = path.endsWith('.webm') || path.endsWith('.mp4');
+            return { type: isVideo ? 'video' : 'image', path: path };
+        });
+
+        totalAssetsToLoad = allAssets.length;
         loadedAssetsCount = 0;
 
-        updatePreloaderProgress(0, `Загрузка ресурсов (0/${totalAssetsToLoad - 1})...`);
+        console.log(`Загрузка ${totalAssetsToLoad} уникальных файлов`);
+
+        updatePreloaderProgress(0, `Загрузка ресурсов (0/${totalAssetsToLoad})...`);
 
         const loadPromises = allAssets.map(asset => {
             return new Promise((resolve) => {
@@ -4282,7 +4257,7 @@ for (const sceneKey in scenes) {
                     loadedAssetsCount++;
                     updatePreloaderProgress(
                         (loadedAssetsCount / totalAssetsToLoad) * 100,
-                        `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad - 1})...`
+                        `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
                     );
                     resolve();
                 }, 15000);
@@ -4304,14 +4279,13 @@ for (const sceneKey in scenes) {
                         loadedAssetsCount++;
                         updatePreloaderProgress(
                             (loadedAssetsCount / totalAssetsToLoad) * 100,
-                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad - 1})...`
+                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
                         );
                         resolve();
                     };
 
                     video.addEventListener('loadeddata', doResolve, { once: true });
                     video.addEventListener('canplaythrough', doResolve, { once: true });
-
                     video.addEventListener('error', () => {
                         console.warn(`Ошибка загрузки видео: ${asset.path}`);
                         doResolve();
@@ -4319,12 +4293,6 @@ for (const sceneKey in scenes) {
 
                     video.src = asset.path;
                     video.load();
-
-                    video.play().then(() => {
-                        video.pause();
-                        video.currentTime = 0;
-                    }).catch(() => {
-                    });
 
                     if (!window.preloadedVideos) window.preloadedVideos = {};
                     window.preloadedVideos[asset.path] = video;
@@ -4342,7 +4310,7 @@ for (const sceneKey in scenes) {
                         loadedAssetsCount++;
                         updatePreloaderProgress(
                             (loadedAssetsCount / totalAssetsToLoad) * 100,
-                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad - 1})...`
+                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
                         );
                         resolve();
                     };
@@ -4352,7 +4320,7 @@ for (const sceneKey in scenes) {
                         loadedAssetsCount++;
                         updatePreloaderProgress(
                             (loadedAssetsCount / totalAssetsToLoad) * 100,
-                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad - 1})...`
+                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
                         );
                         resolve();
                     };
@@ -4363,7 +4331,6 @@ for (const sceneKey in scenes) {
         });
 
         await Promise.all(loadPromises);
-
         updatePreloaderProgress(95, 'Подготовка видео...');
         await new Promise(resolve => setTimeout(resolve, 500));
 
