@@ -4204,10 +4204,33 @@ async function init() {
         const allAssets = [];
         const videoPaths = new Set();
 
-        for (const sceneKey in scenes) {
-            const scene = scenes[sceneKey];
-            if (scene.cubeMap) {
-                scene.cubeMap.forEach(item => {
+for (const sceneKey in scenes) {
+    const scene = scenes[sceneKey];
+    if (scene.cubeMap) {
+        scene.cubeMap.forEach(item => {
+            if (item.type === 'video') {
+                allAssets.push({ type: 'video', path: item.path });
+                videoPaths.add(item.path);
+                if (item.maskPath) {
+                    allAssets.push({ type: 'video', path: item.maskPath });
+                    videoPaths.add(item.maskPath);
+                }
+            } else if (item.type === 'image') {
+                allAssets.push({ type: 'image', path: item.path });
+                if (item.maskPath) {
+                    allAssets.push({ type: 'image', path: item.maskPath });
+                }
+            }
+        });
+    }
+    if (scene.hotspots) {
+        scene.hotspots.forEach(hotspot => {
+            if (hotspot.targetType === 'imagepopup' && hotspot.imageUrl) {
+                allAssets.push({ type: 'image', path: hotspot.imageUrl });
+            }
+            
+            if (hotspot.targetCubeMap) {
+                hotspot.targetCubeMap.forEach(item => {
                     if (item.type === 'video') {
                         allAssets.push({ type: 'video', path: item.path });
                         videoPaths.add(item.path);
@@ -4223,28 +4246,9 @@ async function init() {
                     }
                 });
             }
-            if (scene.hotspots) {
-                scene.hotspots.forEach(hotspot => {
-                    if (hotspot.targetCubeMap) {
-                        hotspot.targetCubeMap.forEach(item => {
-                            if (item.type === 'video') {
-                                allAssets.push({ type: 'video', path: item.path });
-                                videoPaths.add(item.path);
-                                if (item.maskPath) {
-                                    allAssets.push({ type: 'video', path: item.maskPath });
-                                    videoPaths.add(item.maskPath);
-                                }
-                            } else if (item.type === 'image') {
-                                allAssets.push({ type: 'image', path: item.path });
-                                if (item.maskPath) {
-                                    allAssets.push({ type: 'image', path: item.maskPath });
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-        }
+        });
+    }
+}
 
         const scene4Videos = [
             '../video/front4_1.webm',
