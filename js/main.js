@@ -4314,11 +4314,26 @@ async function init() {
                 video.playsInline = true;
                 video.loop = true;
 
-                video.addEventListener('loadeddata', finishLoading, { once: true });
-                video.addEventListener('canplaythrough', finishLoading, { once: true });
+                let resolved = false;
+
+                const doResolve = () => {
+                    if (resolved) return;
+                    resolved = true;
+                    clearTimeout(timeout);
+                    loadedAssetsCount++;
+                    updatePreloaderProgress(
+                        (loadedAssetsCount / totalAssetsToLoad) * 100,
+                        `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
+                    );
+                    resolve();
+                };
+
+                // Ждем canplaythrough, что означает достаточную буферизацию для воспроизведения
+                video.addEventListener('canplaythrough', doResolve, { once: true });
+                
                 video.addEventListener('error', () => {
                     console.warn(`Ошибка загрузки видео: ${asset.path}`);
-                    finishLoading();
+                    doResolve();
                 }, { once: true });
 
                 video.src = asset.path;
@@ -4327,10 +4342,20 @@ async function init() {
                 if (!window.preloadedVideos) window.preloadedVideos = {};
                 window.preloadedVideos[asset.path] = video;
 
-                if (video.readyState >= 2) {
-                    finishLoading();
-                }
+                // ВАЖНО: Запускаем видео сразу, чтобы оно начало буферизироваться для воспроизведения
+                // Это также помогает VideoTexture в Three.js получить первый кадр быстрее
+                video.play().then(() => {
+                    // Можно暂停ить сразу, если нужно, но лучше оставить играть, 
+                    // так как в сцене 1 оно должно играть.
+                    // Если видео не первой сцены, можно поставить на паузу, но для простоты оставим play.
+                }).catch(e => {
+                    // Автовоспроизведение может быть заблокировано браузером без взаимодействия,
+                    // но так как видео muted, это редко бывает проблемой.
+                });
 
+                if (video.readyState >= 2) {
+                    doResolve();
+                }
             } else {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
@@ -4496,15 +4521,6 @@ async function init() {
     });
 
     document.body.style.touchAction = 'pan-x pan-y';
-
-    if (window.preloadedVideos) {
-        for (const [path, video] of Object.entries(window.preloadedVideos)) {
-            if (video && video.play) {
-                video.muted = true;
-                video.play().catch(e => {/* console.log removed */});
-            }
-        }
-    }
 
         updatePreloaderProgress(100, 'Готово!');
 
