@@ -166,7 +166,7 @@ const scenes = {
                 u: 0.174,
                 v: 0.386,
                 targetType: 'imagepopup',     
-                imageUrl: '../images/tabl/pamyat.webp', 
+                imageUrl: '../images/tabl/zags.webp', 
                 imageTitle: '',    
                 title: 'Табличка ЗАГС',
                 icon: '',
@@ -186,7 +186,7 @@ const scenes = {
                 u: 0.11,
                 v: 0.383,
                 targetType: 'imagepopup',    
-                imageUrl: '../images/tabl/pamyat.webp', 
+                imageUrl: '../images/tabl/zags.webp', 
                 imageTitle: '',    
                 title: 'Табличка ЗАГС',
                 icon: '',
@@ -206,7 +206,7 @@ const scenes = {
                 u: 0.074,
                 v: 0.386,
                 targetType: 'imagepopup',     
-                imageUrl: '../images/tabl/pamyat.webp',  
+                imageUrl: '../images/tabl/grcbs.webp',  
                 imageTitle: '',    
                 title: 'Табличка библиотека',
                 icon: '',
@@ -3377,10 +3377,9 @@ function showImagePopupFromHotspot(imageUrl, title, hotspotScreenX, hotspotScree
     if (imageOverlay) {
         closeImagePopup();
     }
-
     const startX = (hotspotScreenX !== undefined) ? hotspotScreenX : window.innerWidth / 2;
     const startY = (hotspotScreenY !== undefined) ? hotspotScreenY : window.innerHeight / 2;
-    
+
     imageOverlay = document.createElement('div');
     imageOverlay.style.cssText = `
         position: fixed;
@@ -3396,7 +3395,7 @@ function showImagePopupFromHotspot(imageUrl, title, hotspotScreenX, hotspotScree
         cursor: pointer;
         transition: background 0.4s ease;
     `;
-    
+
     document.body.appendChild(imageOverlay);
 
     const centerWrapper = document.createElement('div');
@@ -3426,26 +3425,46 @@ function showImagePopupFromHotspot(imageUrl, title, hotspotScreenX, hotspotScree
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '&times;';
+
     closeBtn.style.cssText = `
-        position: fixed;
-        top: -25px;
+        position: fixed; 
+        top: -20px;
         right: -50px;
         width: 40px;
         height: 40px;
-        background: rgba(0,0,0,0.5);
-        border: none;
-        border-radius: 20%;
+        background: rgba(87,87,87,0.3);
+        border-radius: 25%;
         color: white;
         font-size: 28px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 10;
+        z-index: 20; 
         transition: all 0.2s;
+        padding: 0;
+        line-height: 1;
     `;
+
+    const mobileStyle = document.createElement('style');
+    mobileStyle.innerHTML = `
+        @media (max-width: 768px) {
+            .popup-close-btn-mobile {
+                top: -50px !important;
+                right: 10px !important;
+                background: rgba(0,0,0,0.7) !important;
+                width: 36px !important;
+                height: 36px !important;
+                font-size: 24px !important;
+            }
+        }
+    `;
+    document.head.appendChild(mobileStyle);
+    closeBtn.classList.add('popup-close-btn-mobile');
+
     closeBtn.onmouseenter = () => closeBtn.style.background = 'rgba(0,0,0,0.9)';
     closeBtn.onmouseleave = () => closeBtn.style.background = 'rgba(0,0,0,0.5)';
+    
     closeBtn.onclick = (e) => {
         e.stopPropagation();
         closeImagePopup(startX, startY);
@@ -3505,9 +3524,12 @@ function showImagePopupFromHotspot(imageUrl, title, hotspotScreenX, hotspotScree
 
     imgWrapper.appendChild(spinner);
     imgWrapper.appendChild(img);
-    imageContainer.appendChild(closeBtn);
+    
     imageContainer.appendChild(imgWrapper);
-    if (titleDiv) imageContainer.appendChild(titleDiv);
+    imageContainer.appendChild(closeBtn); 
+    
+    if (titleDiv) imageContainer.appendChild(titleDiv); 
+    
     centerWrapper.appendChild(imageContainer);
     imageOverlay.appendChild(centerWrapper);
 
@@ -3523,7 +3545,7 @@ function showImagePopupFromHotspot(imageUrl, title, hotspotScreenX, hotspotScree
             if (spinner.parentNode) spinner.style.display = 'none';
         }, 300);
     };
-    
+
     img.onerror = () => {
         if (spinner.parentNode) spinner.remove();
         img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"%3E%3Crect x="2" y="2" width="20" height="20" rx="2" ry="2"%3E%3C/rect%3E%3Ccircle cx="8.5" cy="8.5" r="2.5"%3E%3C/circle%3E%3Cpolyline points="21 15 16 10 5 21"%3E%3C/polyline%3E%3C/svg%3E';
