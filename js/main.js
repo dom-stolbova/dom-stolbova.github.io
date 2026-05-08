@@ -4273,84 +4273,67 @@ async function init() {
 
         updatePreloaderProgress(0, `Загрузка ресурсов (0/${totalAssetsToLoad})...`);
 
-        const loadPromises = allAssets.map(asset => {
-            return new Promise((resolve) => {
-                const timeout = setTimeout(() => {
-                    loadedAssetsCount++;
-                    updatePreloaderProgress(
-                        (loadedAssetsCount / totalAssetsToLoad) * 100,
-                        `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
-                    );
-                    resolve();
-                }, 15000);
+    const loadPromises = allAssets.map(asset => {
+        return new Promise((resolve) => {
+            let isResolved = false; 
 
-                if (asset.type === 'video') {
-                    const video = document.createElement('video');
-                    video.preload = 'auto';
-                    video.crossOrigin = 'anonymous';
-                    video.muted = true;
-                    video.playsInline = true;
-                    video.loop = true;
+            const finishLoading = () => {
+                if (isResolved) return;
+                isResolved = true;
+                
+                clearTimeout(timeout);
+                loadedAssetsCount++;
+                updatePreloaderProgress(
+                    (loadedAssetsCount / totalAssetsToLoad) * 100,
+                    `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
+                );
+                resolve();
+            };
 
-                    let resolved = false;
+            const timeout = setTimeout(() => {
+                console.warn(`Таймаут загрузки: ${asset.path}`);
+                finishLoading();
+            }, 15000);
 
-                    const doResolve = () => {
-                        if (resolved) return;
-                        resolved = true;
-                        clearTimeout(timeout);
-                        loadedAssetsCount++;
-                        updatePreloaderProgress(
-                            (loadedAssetsCount / totalAssetsToLoad) * 100,
-                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
-                        );
-                        resolve();
-                    };
+            if (asset.type === 'video') {
+                const video = document.createElement('video');
+                video.preload = 'auto';
+                video.crossOrigin = 'anonymous';
+                video.muted = true;
+                video.playsInline = true;
+                video.loop = true;
 
-                    video.addEventListener('loadeddata', doResolve, { once: true });
-                    video.addEventListener('canplaythrough', doResolve, { once: true });
-                    video.addEventListener('error', () => {
-                        console.warn(`Ошибка загрузки видео: ${asset.path}`);
-                        doResolve();
-                    }, { once: true });
+                video.addEventListener('loadeddata', finishLoading, { once: true });
+                video.addEventListener('canplaythrough', finishLoading, { once: true });
+                video.addEventListener('error', () => {
+                    console.warn(`Ошибка загрузки видео: ${asset.path}`);
+                    finishLoading();
+                }, { once: true });
 
-                    video.src = asset.path;
-                    video.load();
+                video.src = asset.path;
+                video.load();
 
-                    if (!window.preloadedVideos) window.preloadedVideos = {};
-                    window.preloadedVideos[asset.path] = video;
+                if (!window.preloadedVideos) window.preloadedVideos = {};
+                window.preloadedVideos[asset.path] = video;
 
-                    if (video.readyState >= 2) {
-                        doResolve();
-                    }
-
-                } else {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-
-                    img.onload = () => {
-                        clearTimeout(timeout);
-                        loadedAssetsCount++;
-                        updatePreloaderProgress(
-                            (loadedAssetsCount / totalAssetsToLoad) * 100,
-                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
-                        );
-                        resolve();
-                    };
-
-                    img.onerror = () => {
-                        clearTimeout(timeout);
-                        loadedAssetsCount++;
-                        updatePreloaderProgress(
-                            (loadedAssetsCount / totalAssetsToLoad) * 100,
-                            `Загрузка (${loadedAssetsCount}/${totalAssetsToLoad})...`
-                        );
-                        resolve();
-                    };
-
-                    img.src = asset.path;
+                if (video.readyState >= 2) {
+                    finishLoading();
                 }
-            });
+
+            } else {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+
+                img.onload = finishLoading;
+                img.onerror = () => {
+                    console.warn(`Ошибка загрузки изображения: ${asset.path}`);
+                    finishLoading();
+                };
+
+                img.src = asset.path;
+            }
         });
+    });
 
         await Promise.all(loadPromises);
         updatePreloaderProgress(95, 'Подготовка видео...');
