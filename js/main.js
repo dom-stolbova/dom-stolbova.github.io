@@ -4266,6 +4266,8 @@ async function init() {
             }
           }
         }
+		
+		uniquePaths.add('../images/infotext.webp');
 
         const firstScene = scenes.scene1;
         firstScene.cubeMap.forEach(item => {
