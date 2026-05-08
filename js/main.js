@@ -4268,6 +4268,8 @@ async function init() {
         }
 		
 		uniquePaths.add('../images/infotext.webp');
+		uniquePaths.add('../images/fon_book_L.webp');
+        uniquePaths.add('../images/fon_book_R.webp');
 
         const firstScene = scenes.scene1;
         firstScene.cubeMap.forEach(item => {
