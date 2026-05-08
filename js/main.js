@@ -4255,6 +4255,17 @@ async function init() {
             '../video/front4_2_mask.webm'
         ];
         scene4Videos.forEach(path => uniquePaths.add(path));
+		
+		if (typeof booksConfig !== 'undefined') {
+        for (const bookId in booksConfig) {
+            const pages = booksConfig[bookId];
+            if (Array.isArray(pages)) {
+                pages.forEach(pagePath => {
+                    uniquePaths.add(pagePath);
+                });
+            }
+          }
+        }
 
         const firstScene = scenes.scene1;
         firstScene.cubeMap.forEach(item => {
