@@ -1,0 +1,3 @@
+User-agent: *
+Host: https://dom-stolbova.github.io
+Sitemap: https://dom-stolbova.github.io/sitemap.xml
